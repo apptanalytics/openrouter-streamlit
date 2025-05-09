@@ -37,7 +37,7 @@ def exchange_code_for_api_key(code: str):
             json={"code": code},
         )
         response.raise_for_status()
-        st.experimental_set_query_params()
+        st.query_params.clear()
         api_key = json.loads(response.text)["key"]
         st.session_state["api_key"] = api_key
         st.experimental_rerun()
@@ -47,7 +47,7 @@ def exchange_code_for_api_key(code: str):
 
 def sidebar(default_model):
     with st.sidebar:
-        params = st.experimental_get_query_params()
+        params = st.query_params
         code = params.get("code", [""])[0]
         if code:
             exchange_code_for_api_key(code)
@@ -68,7 +68,7 @@ def sidebar(default_model):
             available_models, selected_model, default_model
         )
         st.session_state["model"] = selected_model
-        st.experimental_set_query_params(model=selected_model)
+        st.query_params["model"] = selected_model
 
         if api_key:
             st.text("Connected to OpenRouter")
