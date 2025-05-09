@@ -40,16 +40,27 @@ def exchange_code_for_api_key(code: str):
         st.query_params.clear()
         api_key = json.loads(response.text)["key"]
         st.session_state["api_key"] = api_key
-        st.experimental_rerun()
+        st.rerun()
     except requests.exceptions.RequestException as e:
-        st.error(f"Error exchanging code for API key: {e}")
+        error_message = f"Error exchanging code for API key: {e}"
+        if hasattr(e.response, 'text'):
+            try:
+                error_details = json.loads(e.response.text)
+                error_message += f"\nDetails: {error_details}"
+            except:
+                error_message += f"\nResponse: {e.response.text}"
+        st.error(error_message)
+        print(error_message)
 
 
 def sidebar(default_model):
     with st.sidebar:
         params = st.query_params
-        code = params.get("code", [""])[0]
-        if code:
+        # Get the code parameter and validate it
+        code = params.get("code")
+        if isinstance(code, list):
+            code = code[0] if code else None
+        if code and len(code) > 10:  # Basic validation that code looks reasonable
             exchange_code_for_api_key(code)
         # not storing sensitive api_key in query params
         api_key = st.session_state.get("api_key")
@@ -74,7 +85,7 @@ def sidebar(default_model):
             st.text("Connected to OpenRouter")
             if st.button("Log out"):
                 del st.session_state["api_key"]
-                st.experimental_rerun()
+                st.rerun()
         st.markdown(
             "[View the source code](https://github.com/alexanderatallah/openrouter-streamlit)"
         )
